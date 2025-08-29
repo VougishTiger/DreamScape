@@ -20,10 +20,36 @@ choices= {
   "scream": {"Fear": 2}
 }
 
-def apply_choice(player_choice):
-  effects= choices.get(player_choice, {})
+dream_puzzles= [
+  {
+    "question": "You see a clock with no hands. Do you: add hands | smash it | walk away?",
+    "answers": {
+      "add hands": {"Creativity": 2},
+      "smash it": {"Courage": 2, "Fear": 1},
+      "walk away": {"Doubt": 2}
+    }
+  },
+  {
+    "question": "A mirror shows your reflection smiling without you. Do you: smile back | shatter mirror | run?",
+    "answers": {
+      "smile back": {"Creativity": 1, "Fear": -1},
+      "shatter mirror": {"Courage": 2, "Fear": 1},
+      "walk away": {"Doubt": 2, "Fear": 1}
+    }
+  },
+  {
+        "question": "A staircase stretches endlessly upward. Do you: climb | jump off | sit down?",
+        "answers": {
+            "climb": {"Courage": 2},
+            "jump off": {"Fear": 2},
+            "sit down": {"Doubt": 2, "Creativity": 1}
+        }
+    }
+]
+
+def apply_choice(player_choice, effects):
   for stat, change in effects.items():
-    player_stats[stat]+= change
+    player_stats[stat] += change
 
 
 def generate_dream_scene():
@@ -40,22 +66,28 @@ print("🌙 Welcome to Dreamscape RPG 🌙")
 print("You drift into sleep...")
 
 while True:
-  print("\n"+ generate_dream_scene())
+  if random.random()< 0.25:
+    puzzle= random.choice(dream_puzzles)
+    print("\n"+ puzzle["question"])
+    choice= input("what do you do").strip().lower()
+    if choice not in puzzle["answers"]:
+      print("That choice fades away like a forgotten dream...")
+      continue
+      apply_choice(choice, puzzle["answers"][choice])
+    else:
+        print("\n" + generate_dream_scene())
+        print("Choices: face it | avoid it | imagine a new path | scream")
+        choice = input("What do you do? ").strip().lower()
+        if choice not in choices:
+            print("That action dissolves into dream static... (try again!)")
+            continue
+        apply_choice(choice, choices[choice])
 
-  print("Choices: face it | avoid it | imagine a new path | scream")
-  choice= input("What do you do?").strip().lower()
-  if choice not in choices:
-    print("That action dissolves into dream static... (try again!)")
-    continue
+    print(f"Your subconscious stats: {player_stats}")
 
-  apply_choice(choice)
-
-  print(f"Your subconscious stats: {player_stats}")
-
-  if check_wake_up():
-    print("\n✨ You wake up from the dream...")
-    break
-
+    if check_wake_up():
+        print("\n✨ You wake up from the dream...")
+        break
 if player_stats["Fear"] >= 5:
   print("😱 You wake in terror, sweating in the dark...")
 elif player_stats["Creativity"] >= 5:
