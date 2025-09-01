@@ -17,7 +17,7 @@ dream_objects= {
     "model": "cube",
     "color": color.azure, 
     "choices": {
-      "face it": {"Courage": 2, "Fear": -1},
+      "open it": {"Courage": 2, "Fear": -1},
       "avoid it": {"Doubt": 2, "Fear": 1},
       "imagine a new path": {"Creativity": 2},
       "scream": {"Fear": 2}
@@ -85,6 +85,13 @@ def apply_choice(obj_name, choice):
     stats[stat] += change
   stats_text.text = f"Stats: {stats}"
   choice_text.text = f"You chose '{choice}'. The dream shifts..."
+  
+ 
+  for obj in spawned_objects:
+    if obj["name"] == obj_name and obj["entity"].enabled:
+      obj["entity"].disable()
+      break
+
   current_interaction = None
   check_wake_up()
 
@@ -109,9 +116,12 @@ def end_game(message):
 
 def update():
   global current_interaction
+  if current_interaction:  
+    return
+
   current_interaction = None
   for obj in spawned_objects:
-    if distance(player, obj["entity"]) < 2:
+    if obj["entity"].enabled and distance(player, obj["entity"]) < 2:
       current_interaction = obj["name"]
       options= list(dream_objects[obj["name"]]["choices"].keys())
       numbered= [f"[{i+1}] {opt}" for i,opt in enumerate(options)]
