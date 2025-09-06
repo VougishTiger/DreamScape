@@ -66,7 +66,7 @@ current_interaction= None
 
 def spawn_dream_objects(num= 5):
   for name, data in random.sample(list(dream_objects.items()), num):
-    x, z = random.randint(-10, 10), random.randint(-10, 10)
+    x, z= random.randint(-10, 10), random.randint(-10, 10)
     entity= Entity(
       model= data["model"],
       color= data["color"],
@@ -83,13 +83,68 @@ def apply_choice(obj_name, choice):
   effects= dream_objects[obj_name]["choices"][choice]
   for stat, change in effects.items():
     stats[stat] += change
-  stats_text.text = f"Stats: {stats}"
-  choice_text.text = f"You chose '{choice}'. The dream shifts..."
+  stats_text.text= f"Stats: {stats}"
+  choice_text.text= f"You chose '{choice}'. The dream shifts..."
   
  
   for obj in spawned_objects:
     if obj["name"] == obj_name and obj["entity"].enabled:
-      obj["entity"].disable()
+      e= obj["entity"]
+
+      if obj_name == "door":
+        if choice == "open it":
+          e.animate_rotation((0, 90, 0), duration= 1)
+          invoke(e.disable, delay=1.5)
+        else: 
+          e.animate_scale((0, 0, 0), duration= 1)
+          invoke(e.disable, delay= 1.2)
+
+      elif obj_name == "mask":
+        if choice == "smash it":
+          e.animate_scale((0, 0, 0), duration= 0.8)
+          invoke(e.disable, delay=1)
+        elif choice == "wear it":
+          e.parent= camera
+          e.position= (0, 0.5, 1)
+          e.scale= 0.5
+          invoke(e.disable, delay= 2)
+        else:
+          e.disable()
+
+      elif obj_name == "statue":
+        if choice == "pray":
+          e.animate_color(color.gold, duration= 1)
+          invoke(e.disable, delay= 1.5)
+        elif choice == "deface":
+          e.animate_scale((0, 0, 0), duration= 1.2)
+          invoke(e.disable, delay=1.5)
+        else:
+          e.disable()
+
+      elif obj_name == "clock":
+        if choice == "smash it":
+          e.animate_rotation((720, 720, 720), duration= 1)
+          invoke(e.disable, delay= 1.2)
+        elif choice == "wind it":
+          e.animate_rotation((0, 360, 0), duration= 2)
+          invoke(e.disable, delay= 2.2)
+        else:
+          e.disable()
+      
+      elif obj_name == "book":
+        if choice == "burn it":
+          e.animate_color(color.red, duration= 0.5)
+          e.animate_scale((0, 0, 0), duration= 1)
+          invoke(e.disable, delay=1.2)
+        elif choice == "read it":
+          e.animate_rotation((0, 180, 0), duration= 1.2)
+          invoke(e.disable, delay=1.5)
+        elif choice =="close it":
+          e.animate_rotation((0, -90, 0), duration= 1)
+          invoke(e.disable, delay=1.2)
+        else:
+          e.disable()
+        
       break
 
   current_interaction = None
@@ -114,18 +169,26 @@ def end_game(message):
   Text(message, origin= (0,0), scale= 2, color=color.yellow)
   player.disable()
 
+sky = Sky(texture='assets/Sky Paint1.png')
+
+
 def update():
   global current_interaction
-  if current_interaction:  
+  if current_interaction:
     return
 
   current_interaction = None
   for obj in spawned_objects:
-    if obj["entity"].enabled and distance(player, obj["entity"]) < 2:
+    e = obj["entity"]
+
+    if not e or not e.enabled:
+      continue
+
+    if distance(player, e) < 2:
       current_interaction = obj["name"]
-      options= list(dream_objects[obj["name"]]["choices"].keys())
-      numbered= [f"[{i+1}] {opt}" for i,opt in enumerate(options)]
-      choice_text.text= f"The {obj['name']} shimmers...\n" + "  ".join(numbered)
+      options = list(dream_objects[obj["name"]]["choices"].keys())
+      numbered = [f"[{i+1}] {opt}" for i, opt in enumerate(options)]
+      choice_text.text = f"The {obj['name']} shimmers...\n" + "  ".join(numbered)
       break
 
 def input(key):
@@ -134,7 +197,11 @@ def input(key):
     if key in ["1", "2", "3", "4"] and int(key)-1 < len(options):
       apply_choice(current_interaction,options[int(key)-1])
 
-Sky()
-DirectionalLight().look_at(Vec3(1,-1,-1))
+directional_light= DirectionalLight()
+directional_light.look_at(Vec3(1,-1,-1))
+
+camera.clip_plane_far= 50
+scene.fog_color= color.rgb(200,200,220)   
+scene.fog_density= 0.01
 
 app.run()
